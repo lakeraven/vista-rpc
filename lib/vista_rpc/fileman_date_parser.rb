@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics, Style/Documentation
-
-require 'date'
+require "date"
 
 # Converts between Ruby Date/Time and VistA FileMan date format.
 #
@@ -17,7 +15,7 @@ module VistaRpc
     def self.parse_date(fileman_date)
       return nil if fileman_date.nil? || fileman_date.to_s.empty?
 
-      fileman_str = fileman_date.to_s.split('.').first
+      fileman_str = fileman_date.to_s.split(".").first
       return nil unless fileman_str.match?(/\A\d{7}\z/)
 
       yyy = fileman_str[0..2].to_i
@@ -38,7 +36,7 @@ module VistaRpc
     def self.parse_datetime(fileman_datetime)
       return nil if fileman_datetime.nil? || fileman_datetime.to_s.empty?
 
-      parts = fileman_datetime.to_s.split('.')
+      parts = fileman_datetime.to_s.split(".")
       return nil unless parts.length == 2
       return nil unless parts[0].match?(/\A\d{7}\z/)
 
@@ -47,8 +45,8 @@ module VistaRpc
       # format_datetime(..., seconds: true).
       return nil unless time_part.match?(/\A\d{2}(\d{2}(\d{2})?)?\z/)
 
-      time_part = time_part.ljust(4, '0') if time_part.length == 2
-      time_part = time_part.ljust(6, '0') if time_part.length == 4
+      time_part = time_part.ljust(4, "0") if time_part.length == 2
+      time_part = time_part.ljust(6, "0") if time_part.length == 4
 
       date = parse_date(parts[0])
       return nil if date.nil?
@@ -69,8 +67,8 @@ module VistaRpc
       return nil if date.nil?
 
       yyy = date.year - 1700
-      mm = date.month.to_s.rjust(2, '0')
-      dd = date.day.to_s.rjust(2, '0')
+      mm = date.month.to_s.rjust(2, "0")
+      dd = date.day.to_s.rjust(2, "0")
 
       "#{yyy}#{mm}#{dd}"
     end
@@ -82,16 +80,15 @@ module VistaRpc
       return nil if datetime.nil?
 
       yyy = datetime.year - 1700
-      mm = datetime.month.to_s.rjust(2, '0')
-      dd = datetime.day.to_s.rjust(2, '0')
-      hh = datetime.hour.to_s.rjust(2, '0')
-      min = datetime.min.to_s.rjust(2, '0')
+      mm = datetime.month.to_s.rjust(2, "0")
+      dd = datetime.day.to_s.rjust(2, "0")
+      hh = datetime.hour.to_s.rjust(2, "0")
+      min = datetime.min.to_s.rjust(2, "0")
       base = "#{yyy}#{mm}#{dd}.#{hh}#{min}"
       return base unless seconds
 
-      sec = datetime.sec.to_s.rjust(2, '0')
+      sec = datetime.sec.to_s.rjust(2, "0")
       "#{base}#{sec}"
     end
   end
 end
-# rubocop:enable Metrics, Style/Documentation

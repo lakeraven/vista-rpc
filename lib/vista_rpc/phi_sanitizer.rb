@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics, Style/Documentation
-
-require 'openssl'
+require "openssl"
 
 # HIPAA-aligned PHI sanitization for logs and error messages.
 #
@@ -35,7 +33,7 @@ module VistaRpc
     def hash_identifier(identifier)
       return nil if identifier.nil? || identifier.to_s.empty?
 
-      digest = OpenSSL::HMAC.hexdigest('SHA256', resolve_secret_key, identifier.to_s)
+      digest = OpenSSL::HMAC.hexdigest("SHA256", resolve_secret_key, identifier.to_s)
       digest[0..11]
     end
 
@@ -50,38 +48,38 @@ module VistaRpc
 
     # Sanitize a string that may contain PHI.
     def sanitize_message(message)
-      return '' if message.nil? || message.to_s.empty?
+      return "" if message.nil? || message.to_s.empty?
 
       sanitized = message.dup
 
       # Patient names: "patient: SMITH,JOHN" or "patient_name: JONES,MARY"
       sanitized.gsub!(
         /\bpatient[_\s]*(?:name)?[:\s]+([A-Z]+(?:\s+JR|SR|II|III|IV)?),\s*([A-Z]+(?:\s+[A-Z]+)*)/i,
-        'patient:[NAME-REDACTED]'
+        "patient:[NAME-REDACTED]"
       )
 
       # Standalone VistA-format names (LASTNAME,FIRSTNAME)
       sanitized.gsub!(/\b([A-Z]{2,}),\s*([A-Z]{2,}(?:\s+[A-Z]{2,})*)\b/) do |_match|
-        '[NAME-REDACTED]'
+        "[NAME-REDACTED]"
       end
 
       # DFN/IEN/HRN identifiers
-      sanitized.gsub!(/\bDFN[:\s]*\d+/i, 'DFN:[REDACTED]')
-      sanitized.gsub!(/\bpatient[_\s]*dfn[:\s]*\d+/i, 'patient_dfn:[REDACTED]')
-      sanitized.gsub!(/\bpatient[_\s]*IEN[:\s]*\d+/i, 'patient_IEN:[REDACTED]')
-      sanitized.gsub!(/\bHRN[:\s]*\d+/i, 'HRN:[HRN-REDACTED]')
-      sanitized.gsub!(/\bhealth[_\s]*record[_\s]*(?:number)?[:\s]*\d+/i, 'health_record:[HRN-REDACTED]')
+      sanitized.gsub!(/\bDFN[:\s]*\d+/i, "DFN:[REDACTED]")
+      sanitized.gsub!(/\bpatient[_\s]*dfn[:\s]*\d+/i, "patient_dfn:[REDACTED]")
+      sanitized.gsub!(/\bpatient[_\s]*IEN[:\s]*\d+/i, "patient_IEN:[REDACTED]")
+      sanitized.gsub!(/\bHRN[:\s]*\d+/i, "HRN:[HRN-REDACTED]")
+      sanitized.gsub!(/\bhealth[_\s]*record[_\s]*(?:number)?[:\s]*\d+/i, "health_record:[HRN-REDACTED]")
 
       # SSN (with dashes, then bare 9-digit numbers)
-      sanitized.gsub!(/\b\d{3}-\d{2}-\d{4}\b/, '[SSN-REDACTED]')
-      sanitized.gsub!(/\b\d{9}\b/, '[ID-REDACTED]')
+      sanitized.gsub!(/\b\d{3}-\d{2}-\d{4}\b/, "[SSN-REDACTED]")
+      sanitized.gsub!(/\b\d{9}\b/, "[ID-REDACTED]")
 
       # Birth/death dates
       sanitized.gsub!(/\b(dob|birth[_\s]*date)[:\s]*\d{4}-\d{2}-\d{2}/i, '\1:[DATE-REDACTED]')
       sanitized.gsub!(/\b(death[_\s]*date|deceased)[:\s]*\d{4}-\d{2}-\d{2}/i, '\1:[DATE-REDACTED]')
 
       # Phone numbers
-      sanitized.gsub!(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/, '[PHONE-REDACTED]')
+      sanitized.gsub!(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/, "[PHONE-REDACTED]")
 
       sanitized
     end
@@ -94,7 +92,7 @@ module VistaRpc
     private
 
     def resolve_secret_key
-      @secret_key || rails_secret_key || 'development-fallback-key'
+      @secret_key || rails_secret_key || "development-fallback-key"
     end
 
     def rails_secret_key
@@ -105,7 +103,7 @@ module VistaRpc
 
     def sanitized_key(key)
       case key
-      when :patient_dfn, :dfn then :patient_id_hash
+      when :patient_dfn, :dfn         then :patient_id_hash
       when :ssn, :social_security_number then :ssn_present
       else key
       end
@@ -126,4 +124,3 @@ module VistaRpc
     end
   end
 end
-# rubocop:enable Metrics, Style/Documentation

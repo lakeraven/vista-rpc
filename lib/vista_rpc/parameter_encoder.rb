@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics, Style/Documentation
-
 # Encodes parameters for VistA RPC calls.
 #
 # Implements the VistA RPC Broker parameter encoding protocol.
@@ -20,12 +18,12 @@ module VistaRpc
 
     def self.encode(param)
       value = case param
-              when nil   then ''
-              when true  then 'true'
-              when false then 'false'
-              when Array then param.map(&:to_s).join("\n")
-              else param.to_s
-              end
+      when nil   then ""
+      when true  then "true"
+      when false then "false"
+      when Array then param.map(&:to_s).join("\n")
+      else param.to_s
+      end
 
       byte_size = value.bytesize
       if byte_size > MAX_PARAM_LENGTH
@@ -36,7 +34,7 @@ module VistaRpc
     end
 
     def self.encode_list(params)
-      return '' if params.nil? || params.empty?
+      return "" if params.nil? || params.empty?
 
       params.map { |p| encode(p) }.join
     end
@@ -48,9 +46,9 @@ module VistaRpc
 
     # Decode parameter from RPC format: 1{len}00f{value}\x04
     def self.decode(encoded_str)
-      return '' if encoded_str.nil? || encoded_str.empty?
+      return "" if encoded_str.nil? || encoded_str.empty?
 
-      if encoded_str.start_with?('1') && encoded_str.include?(EOT)
+      if encoded_str.start_with?("1") && encoded_str.include?(EOT)
         value_start = 7
         eot_position = encoded_str.index(EOT)
         return encoded_str[value_start...eot_position] if eot_position
@@ -60,4 +58,3 @@ module VistaRpc
     end
   end
 end
-# rubocop:enable Metrics, Style/Documentation

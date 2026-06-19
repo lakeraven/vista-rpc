@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics, Style/Documentation
-
-require_relative 'fileman_date_parser'
+require_relative "fileman_date_parser"
 
 module VistaRpc
   # Declarative mapping from RPMS RPC caret-delimited responses to hashes.
@@ -44,7 +42,7 @@ module VistaRpc
       # Uses instance_exec so the block can call rpc/field directly.
       # Safe: blocks are developer-defined at load time, not user input.
       def configure(&block)
-        instance_exec(&block)
+        instance_exec(&block) # rubocop:disable Security/Eval
       end
 
       def rpc(name)
@@ -85,11 +83,11 @@ module VistaRpc
       end
 
       def terminology_fields
-        @fields.reject { |f| f.terminology.nil? }
+        @fields.select { |f| !f.terminology.nil? }
       end
 
       def pointer_fields
-        @fields.reject { |f| f.pointer.nil? }
+        @fields.select { |f| !f.pointer.nil? }
       end
 
       # Parse a single-line RPC response into a hash.
@@ -97,7 +95,7 @@ module VistaRpc
         line = normalize_line(response)
         return nil if line.nil? || line.empty?
 
-        parts = line.split('^', -1)
+        parts = line.split("^", -1)
         result = {}
 
         @fields.each do |f|
@@ -115,7 +113,6 @@ module VistaRpc
 
         response.filter_map do |line|
           next if line.nil? || line.to_s.empty?
-
           parse_one(line)
         end
       end
@@ -157,14 +154,14 @@ module VistaRpc
       # Format a hash into a caret-delimited string matching this mapping's field positions.
       def format_one(attrs)
         max_pos = @fields.map(&:position).max || 0
-        parts = Array.new(max_pos + 1, '')
+        parts = Array.new(max_pos + 1, "")
 
         @fields.each do |f|
           val = attrs[f.attribute]
           parts[f.position] = format_value(val, f.type)
         end
 
-        parts.join('^')
+        parts.join("^")
       end
 
       # Format an array of hashes into an array of caret-delimited strings.
@@ -219,7 +216,7 @@ module VistaRpc
       private
 
       def format_value(val, type)
-        return '' if val.nil?
+        return "" if val.nil?
 
         case type
         when :fileman_date
@@ -229,7 +226,7 @@ module VistaRpc
         when :integer
           val.to_s
         when :boolean
-          val ? '1' : '0'
+          val ? "1" : "0"
         else
           val.to_s
         end
@@ -241,7 +238,6 @@ module VistaRpc
 
         if response.is_a?(Array)
           return nil if response.empty?
-
           return response.first.to_s
         end
 
@@ -263,7 +259,7 @@ module VistaRpc
         when :fileman_datetime
           FilemanDateParser.parse_datetime(raw)
         when :boolean
-          raw == '1' || raw.casecmp?('yes')
+          raw == "1" || raw.casecmp?("yes")
         else
           raw
         end
@@ -298,4 +294,3 @@ module VistaRpc
     end
   end
 end
-# rubocop:enable Metrics, Style/Documentation

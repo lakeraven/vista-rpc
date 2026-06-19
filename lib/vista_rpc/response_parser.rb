@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics, Style/Documentation
-
 # Utilities for parsing RPMS RPC responses.
 #
 # RPMS returns data in various formats with inconsistent column naming.
@@ -28,7 +26,7 @@ module VistaRpc
     # Pick first non-empty value from hash using multiple key variations.
     # RPMS returns inconsistent column casing across sites/versions.
     def self.pick_string(row, *keys)
-      return '' if row.nil?
+      return "" if row.nil?
 
       keys.each do |key|
         found_key = row.keys.find { |k| k.to_s.casecmp?(key.to_s) }
@@ -37,7 +35,7 @@ module VistaRpc
         value = row[found_key]
         return value.to_s unless value.nil? || value.to_s.empty?
       end
-      ''
+      ""
     end
 
     # Get value from hash with multiple key variations (raw value, not string).
@@ -56,25 +54,25 @@ module VistaRpc
 
     # Parse caret-delimited piece string (1-based, FileMan convention).
     def self.piece(str, piece_num)
-      return '' if str.nil? || str.empty?
-      return '' if piece_num < 1
+      return "" if str.nil? || str.empty?
+      return "" if piece_num < 1
 
-      pieces = str.split('^', -1) # -1 preserves trailing empty strings
-      pieces[piece_num - 1] || ''
+      pieces = str.split("^", -1) # -1 preserves trailing empty strings
+      pieces[piece_num - 1] || ""
     end
 
     # Parse pipe-delimited parameter string (used by AMH module).
     def self.pipe_piece(str, piece_num)
-      return '' if str.nil? || str.empty?
-      return '' if piece_num < 1
+      return "" if str.nil? || str.empty?
+      return "" if piece_num < 1
 
-      pieces = str.split('|', -1)
-      pieces[piece_num - 1] || ''
+      pieces = str.split("|", -1)
+      pieces[piece_num - 1] || ""
     end
 
     # Build pipe-delimited parameter string for AMH-style RPCs.
     def self.pipe_param(*args)
-      args.map(&:to_s).join('|')
+      args.map(&:to_s).join("|")
     end
 
     # Parse RPC result for success/failure.
@@ -82,7 +80,7 @@ module VistaRpc
       if response.nil? || (response.respond_to?(:empty?) && response.empty?)
         return RpcResult.new(
           success: empty_is_success,
-          message: empty_is_success ? nil : 'No response from server'
+          message: empty_is_success ? nil : "No response from server"
         )
       end
 
@@ -98,22 +96,22 @@ module VistaRpc
     end
 
     def self.parse_row_result(row)
-      error_msg = pick_string(row, 'ERROR', 'Error', 'ERRORMSG', 'ErrorMessage', 'ErrorMsg')
+      error_msg = pick_string(row, "ERROR", "Error", "ERRORMSG", "ErrorMessage", "ErrorMsg")
       return RpcResult.new(success: false, message: error_msg) unless error_msg.empty?
 
-      status = pick_string(row, 'STATUS', 'Status', 'RESULT', 'Result')
+      status = pick_string(row, "STATUS", "Status", "RESULT", "Result")
       unless status.empty?
         status_lower = status.downcase
-        if status_lower == '-1' || status_lower.include?('error') || status_lower.include?('fail')
-          msg = pick_string(row, 'MESSAGE', 'Message', 'MSG', 'Msg', 'DESCRIPTION', 'Description')
+        if status_lower == "-1" || status_lower.include?("error") || status_lower.include?("fail")
+          msg = pick_string(row, "MESSAGE", "Message", "MSG", "Msg", "DESCRIPTION", "Description")
           return RpcResult.new(success: false, message: msg.empty? ? status : msg)
         end
       end
 
       first_val = row.values.first.to_s
-      return parse_string_result(first_val, row: row) if first_val.include?('^')
+      return parse_string_result(first_val, row: row) if first_val.include?("^")
 
-      message = pick_string(row, 'MESSAGE', 'Message', 'MSG')
+      message = pick_string(row, "MESSAGE", "Message", "MSG")
       unless message.empty?
         msg_lower = message.downcase
         if %w[error fail invalid denied].any? { |word| msg_lower.include?(word) }
@@ -121,25 +119,25 @@ module VistaRpc
         end
       end
 
-      id = pick_string(row, 'ID', 'Id', 'IEN', 'ien', 'BMXIEN', 'ApptID', 'WaitListItemId')
+      id = pick_string(row, "ID", "Id", "IEN", "ien", "BMXIEN", "ApptID", "WaitListItemId")
       RpcResult.new(success: true, id: id.empty? ? nil : id)
     end
 
     def self.parse_string_result(str, row: nil)
-      if str.include?('^')
-        pieces = str.split('^')
+      if str.include?("^")
+        pieces = str.split("^")
         code = pieces[0].strip
-        message = pieces[1..].join('^')
+        message = pieces[1..].join("^")
 
-        if code == '-1' || code.casecmp?('error')
+        if code == "-1" || code.casecmp?("error")
           return RpcResult.new(
             success: false,
-            message: message.empty? ? 'Operation failed' : message
+            message: message.empty? ? "Operation failed" : message
           )
         end
 
         if %w[1 0 ok].any? { |ok| code.casecmp?(ok) }
-          id = row ? pick_string(row, 'ID', 'Id', 'IEN', 'ien', 'BMXIEN') : nil
+          id = row ? pick_string(row, "ID", "Id", "IEN", "ien", "BMXIEN") : nil
           id = nil if id.nil? || id.empty?
           return RpcResult.new(
             success: true,
@@ -153,7 +151,7 @@ module VistaRpc
     end
 
     # Convert array of caret-delimited strings to array of hashes.
-    def self.rows_from_delimited(lines, header_row: 0, delimiter: '^')
+    def self.rows_from_delimited(lines, header_row: 0, delimiter: "^")
       return [] if lines.nil? || lines.empty?
       return [] if lines.length <= header_row
 
@@ -163,7 +161,7 @@ module VistaRpc
       data_lines.map do |line|
         values = line.split(delimiter, -1)
         headers.each_with_index.each_with_object({}) do |(header, idx), row|
-          row[header] = values[idx]&.strip || ''
+          row[header] = values[idx]&.strip || ""
         end
       end
     end
@@ -185,4 +183,3 @@ module VistaRpc
     }.freeze
   end
 end
-# rubocop:enable Metrics, Style/Documentation
