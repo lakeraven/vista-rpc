@@ -36,6 +36,8 @@ module VistaRpc
         @name = name
         @rpc_name = nil
         @fields = []
+        @backend = nil
+        @source = nil
       end
 
       # Configure this mapping using a block.
@@ -47,6 +49,18 @@ module VistaRpc
 
       def rpc(name)
         @rpc_name = name
+      end
+
+      def backend(value = nil)
+        return @backend if value.nil?
+
+        @backend = value
+      end
+
+      def source(value = nil)
+        return @source if value.nil?
+
+        @source = value
       end
 
       def field(position, attribute, type = :string, terminology: nil, pointer: nil)
@@ -267,6 +281,10 @@ module VistaRpc
     end
 
     @registry = {}
+
+    def self.registry
+      @registry
+    end
 
     def self.define(name, &block)
       mapping = Mapping.new(name)

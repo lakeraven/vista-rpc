@@ -16,6 +16,7 @@ module VistaRpc
     # ORWPT SELECT — core patient demographics
     # Format: NAME^SEX^DOB^SSN^LOCIEN^LOCNM^RMBD^CWAD^SENSITIVE^ADMITTED^CONV^SC^SC%^ICN^AGE^TS
     DataMapper.define(:patient_select) do |m|
+      m.backend :vista
       m.rpc "ORWPT SELECT"
       m.field 0,  :name
       m.field 1,  :sex
@@ -35,6 +36,7 @@ module VistaRpc
     # IHS demographic detail lives in the BHDPTRPC family of RPCs (not
     # installed on staging — see rr-6jr).
     DataMapper.define(:patient_id_info) do |m|
+      m.backend :vista
       m.rpc "ORWPT ID INFO"
       m.field 0, :ssn
       m.field 1, :dob, :fileman_date
@@ -49,6 +51,7 @@ module VistaRpc
     # SEX and DOB for parity with FHIR Patient?name&birthdate|gender filters. Missing
     # trailing pieces parse as nil via DataMapper#coerce.
     DataMapper.define(:patient_list) do |m|
+      m.backend :vista
       m.rpc "ORWPT LIST ALL"
       m.field 0, :dfn, :integer
       m.field 1, :name
@@ -60,6 +63,7 @@ module VistaRpc
     # (Mickey's SSN 000009999):
     #   "3^MOUSE,MICKEY M^2100214^000009999"
     DataMapper.define(:patient_ssn) do |m|
+      m.backend :vista
       m.rpc "ORWPT FULLSSN"
       m.field 0, :dfn,  :integer
       m.field 1, :name
@@ -70,6 +74,7 @@ module VistaRpc
     # ORWPT APPTLST — patient appointments (multi-line)
     # Format: APPTTIME^LOCIEN^LOCNAME^EXTSTATUS
     DataMapper.define(:patient_appointments) do |m|
+      m.backend :vista
       m.rpc "ORWPT APPTLST"
       m.field 0, :datetime,     :fileman_date
       m.field 1, :location_ien, :integer
@@ -80,6 +85,7 @@ module VistaRpc
     # ORQQAL LIST — patient allergies (multi-line)
     # Format: ALLERGEN^REACTION^SEVERITY
     DataMapper.define(:allergy_list) do |m|
+      m.backend :vista
       m.rpc "ORQQAL LIST"
       m.field 0, :allergen
       m.field 1, :reaction
@@ -89,6 +95,7 @@ module VistaRpc
     # ORQQPL LIST — patient problem list (multi-line)
     # Format: IEN^STATUS^DESCRIPTION^ICD_CODE^ONSET_DATE^RECORDED_DATE^PROVIDER_DUZ
     DataMapper.define(:problem_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPL LIST"
       m.field 0, :ien
       m.field 1, :status
@@ -106,6 +113,7 @@ module VistaRpc
     # these mappings will get raw strings + simple keyed rows respectively.
 
     DataMapper.define(:problem_add_save) do |m|
+      m.backend :vista
       m.rpc "ORQQPL ADD SAVE"
     end
 
@@ -117,6 +125,7 @@ module VistaRpc
     # convention. Refine when trace capture lands.
 
     DataMapper.define(:problem_audit_history) do |m|
+      m.backend :vista
       m.rpc "ORQQPL AUDIT HIST"
       m.field 0, :event
       m.field 1, :date, :fileman_date
@@ -124,24 +133,29 @@ module VistaRpc
     end
 
     DataMapper.define(:problem_check_duplicate) do |m|
+      m.backend :vista
       m.rpc "ORQQPL CHECK DUP"
     end
 
     DataMapper.define(:problem_clinic_filter_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPL CLIN FILTER LIST"
     end
 
     DataMapper.define(:problem_clinic_search) do |m|
+      m.backend :vista
       m.rpc "ORQQPL CLIN SRCH"
       m.field 0, :ien
       m.field 1, :description
     end
 
     DataMapper.define(:problem_delete) do |m|
+      m.backend :vista
       m.rpc "ORQQPL DELETE"
     end
 
     DataMapper.define(:problem_detail) do |m|
+      m.backend :vista
       m.rpc "ORQQPL DETAIL"
       m.field 0, :ien
       m.field 1, :status
@@ -149,6 +163,7 @@ module VistaRpc
     end
 
     DataMapper.define(:problem_edit_load) do |m|
+      m.backend :vista
       m.rpc "ORQQPL EDIT LOAD"
       m.field 0, :ien
       m.field 1, :status
@@ -156,24 +171,29 @@ module VistaRpc
     end
 
     DataMapper.define(:problem_edit_save) do |m|
+      m.backend :vista
       m.rpc "ORQQPL EDIT SAVE"
     end
 
     DataMapper.define(:problem_inactivate) do |m|
+      m.backend :vista
       m.rpc "ORQQPL INACTIVATE"
     end
 
     DataMapper.define(:problem_init_patient) do |m|
+      m.backend :vista
       m.rpc "ORQQPL INIT PT"
       m.field 0, :dfn
       m.field 1, :name
     end
 
     DataMapper.define(:problem_init_user) do |m|
+      m.backend :vista
       m.rpc "ORQQPL INIT USER"
     end
 
     DataMapper.define(:problem_comments) do |m|
+      m.backend :vista
       m.rpc "ORQQPL PROB COMMENTS"
       m.field 0, :date, :fileman_date
       m.field 1, :author
@@ -181,60 +201,73 @@ module VistaRpc
     end
 
     DataMapper.define(:problem_lex_search) do |m|
+      m.backend :vista
       m.rpc "ORQQPL PROBLEM LEX SEARCH"
       m.field 0, :code, :string, terminology: :icd10
       m.field 1, :description
     end
 
     DataMapper.define(:problem_problem_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPL PROBLEM LIST"
     end
 
     DataMapper.define(:problem_provider_filter_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPL PROV FILTER LIST"
     end
 
     DataMapper.define(:problem_provider_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPL PROVIDER LIST"
       m.field 0, :duz, :string, pointer: { file: 200 }
       m.field 1, :name
     end
 
     DataMapper.define(:problem_replace) do |m|
+      m.backend :vista
       m.rpc "ORQQPL REPLACE"
     end
 
     DataMapper.define(:problem_save_view) do |m|
+      m.backend :vista
       m.rpc "ORQQPL SAVEVIEW"
     end
 
     DataMapper.define(:problem_service_filter_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPL SERV FILTER LIST"
     end
 
     DataMapper.define(:problem_service_search) do |m|
+      m.backend :vista
       m.rpc "ORQQPL SRVC SRCH"
     end
 
     DataMapper.define(:problem_update) do |m|
+      m.backend :vista
       m.rpc "ORQQPL UPDATE"
     end
 
     DataMapper.define(:problem_user_categories) do |m|
+      m.backend :vista
       m.rpc "ORQQPL USER PROB CATS"
     end
 
     DataMapper.define(:problem_user_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPL USER PROB LIST"
     end
 
     DataMapper.define(:problem_verify) do |m|
+      m.backend :vista
       m.rpc "ORQQPL VERIFY"
     end
 
     # ORQQVI VITALS — patient vitals (multi-line)
     # Format: TYPE^VALUE^UNITS^DATE
     DataMapper.define(:vitals) do |m|
+      m.backend :vista
       m.rpc "ORQQVI VITALS"
       m.field 0, :type
       m.field 1, :value
@@ -259,6 +292,7 @@ module VistaRpc
     # declared here; intermediate positions are small integer codes
     # whose meaning would need the kernel data dictionary to interpret.
     DataMapper.define(:practitioner_info) do |m|
+      m.backend :vista
       m.rpc "ORWU USERINFO"
       m.field 0,  :duz,           :integer
       m.field 1,  :name
@@ -274,12 +308,14 @@ module VistaRpc
     # (e.g., ".5" for Postmaster, ".6" for Shared,Mail) which :integer
     # coercion would collapse to 0.
     DataMapper.define(:practitioner_list) do |m|
+      m.backend :vista
       m.rpc "ORWU NEWPERS"
       m.field 0, :ien
       m.field 1, :name
     end
 
     DataMapper.define(:user_management_user_list) do |m|
+      m.backend :vista
       m.rpc "ORWU NEWPERS"
       m.field 0, :duz
       m.field 1, :name
@@ -292,6 +328,7 @@ module VistaRpc
     # ORQQPS LIST — medication list (multi-line)
     # Format: IEN^DRUG_NAME^SIG^STATUS^LAST_FILL^REFILLS^PROVIDER
     DataMapper.define(:medication_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPS LIST"
       m.field 0, :ien
       m.field 1, :drug_name, :string, terminology: :rxnorm, pointer: { file: 50 }
@@ -306,6 +343,7 @@ module VistaRpc
     # Format: IEN^TITLE^STATUS^INTENT^CATEGORY^START_DATE^END_DATE^
     #         AUTHOR_DUZ^AUTHOR_NAME^GOAL_IENS^ACTIVITY^DESCRIPTION^NOTE
     DataMapper.define(:care_plan_list) do |m|
+      m.backend :vista
       m.rpc "ORQQCP LIST"
       m.field 0,  :ien
       m.field 1,  :title
@@ -328,6 +366,7 @@ module VistaRpc
     # The PARTICIPANTS field is a sub-encoded string parsed by the API module:
     #   DUZ~NAME~ROLE~START~END;DUZ~NAME~ROLE~START~END;...
     DataMapper.define(:care_team_list) do |m|
+      m.backend :vista
       m.rpc "ORQQCT LIST"
       m.field 0, :ien
       m.field 1, :team_name
@@ -346,6 +385,7 @@ module VistaRpc
     #         PRIORITY^START_DATE^TARGET_DATE^STATUS_DATE^
     #         PROVIDER_DUZ^PROVIDER_NAME^NOTE
     DataMapper.define(:goal_list) do |m|
+      m.backend :vista
       m.rpc "ORQQGO LIST"
       m.field 0,  :ien
       m.field 1,  :goal_text
@@ -364,6 +404,7 @@ module VistaRpc
     # ORWPCE PROCEDURE LIST — procedure list (multi-line)
     # Format: IEN^NAME^DATE^PROVIDER^STATUS
     DataMapper.define(:procedure_list) do |m|
+      m.backend :vista
       m.rpc "ORWPCE PROCEDURE LIST"
       m.field 0, :ien
       m.field 1, :name
@@ -375,6 +416,7 @@ module VistaRpc
     # ORWPCE IMPLANT LIST — implanted device list (multi-line)
     # Format: IEN^UDI^DEVICE_ID^STATUS^DEVICE_NAME^MANUFACTURER^MODEL^SERIAL^LOT^MFG_DATE^EXP_DATE^TYPE_CODE^TYPE_DISPLAY^DISTINCT_ID
     DataMapper.define(:device_list) do |m|
+      m.backend :vista
       m.rpc "ORWPCE IMPLANT LIST"
       m.field 0, :ien
       m.field 1, :udi
@@ -400,6 +442,7 @@ module VistaRpc
     # RPC is invoked with a single composite param: "dfn^from_date^to_date".
     # Format: IEN^TEST_NAME^RESULT^UNITS^REF_RANGE^ABNORMAL_FLAG^COLLECTION_DATE^STATUS
     DataMapper.define(:lab_result_list) do |m|
+      m.backend :vista
       m.rpc "ORWLRR RESULT LIST"
       m.field 0, :ien,             :integer
       m.field 1, :test_name
@@ -415,6 +458,7 @@ module VistaRpc
     # Format: IEN^EXAM_NAME^CPT_CODE^STATUS^EXAM_DATE^REPORT_DATE^RAD_DUZ^
     #         RAD_NAME^IMPRESSION^IMAGING_STUDY_IEN^REPORT_TEXT
     DataMapper.define(:radiology_list) do |m|
+      m.backend :vista
       m.rpc "ORWRA REPORT LIST"
       m.field 0,  :ien,                :integer
       m.field 1,  :exam_name
@@ -446,6 +490,7 @@ module VistaRpc
     #                                          NOT the auth class code that
     #                                          av_code's :user_class returns)
     DataMapper.define(:user_info) do |m|
+      m.backend :vista
       m.rpc "XUS GET USER INFO"
       m.line_field 0, :duz,  :integer
       m.line_field 1, :name
@@ -462,6 +507,7 @@ module VistaRpc
     # Format: IEN^PATIENT_DFN^SENDER_DUZ^SENDER_NAME^RECIPIENT_DUZ^RECIPIENT_NAME^
     #         SUBJECT^BODY^SENT_AT^READ_AT^STATUS^PRIORITY^CATEGORY^PARENT_ID^THREAD_ID^BASKET
     DataMapper.define(:mailman_message) do |m|
+      m.backend :vista
       m.rpc "XM GET MESSAGE"
       m.field 0,  :ien, :integer
       m.field 1,  :patient_dfn, :integer
@@ -483,6 +529,7 @@ module VistaRpc
 
     # XM GET MESSAGES — patient-scoped MailMan messages (same wire shape as GET).
     DataMapper.define(:mailman_messages_for_patient) do |m|
+      m.backend :vista
       m.rpc "XM GET MESSAGES"
       m.field 0,  :ien, :integer
       m.field 1,  :patient_dfn, :integer
@@ -504,6 +551,7 @@ module VistaRpc
 
     # XM SEND MESSAGE — write result: SUCCESS^MESSAGE_IEN^ERROR
     DataMapper.define(:mailman_send) do |m|
+      m.backend :vista
       m.rpc "XM SEND MESSAGE"
       m.field 0, :success, :boolean
       m.field 1, :message_ien, :integer
@@ -512,6 +560,7 @@ module VistaRpc
 
     # XM REPLY MESSAGE — write result: SUCCESS^MESSAGE_IEN^THREAD_ID^ERROR
     DataMapper.define(:mailman_reply) do |m|
+      m.backend :vista
       m.rpc "XM REPLY MESSAGE"
       m.field 0, :success, :boolean
       m.field 1, :message_ien, :integer
@@ -521,6 +570,7 @@ module VistaRpc
 
     # XM GET THREAD — MailMan thread messages (same wire shape as GET).
     DataMapper.define(:mailman_thread) do |m|
+      m.backend :vista
       m.rpc "XM GET THREAD"
       m.field 0,  :ien, :integer
       m.field 1,  :patient_dfn, :integer
@@ -542,6 +592,7 @@ module VistaRpc
 
     # XM GET INBOX — MailMan inbox messages (same wire shape as GET).
     DataMapper.define(:mailman_inbox) do |m|
+      m.backend :vista
       m.rpc "XM GET INBOX"
       m.field 0,  :ien, :integer
       m.field 1,  :patient_dfn, :integer
@@ -564,6 +615,7 @@ module VistaRpc
     # XQAL NEW ALERTS — pending alert list.
     # Format: ALERT_IEN^USER_DUZ^MESSAGE^CREATED_AT^PRIORITY^CATEGORY^STATUS
     DataMapper.define(:xqal_alert) do |m|
+      m.backend :vista
       m.rpc "XQAL NEW ALERTS"
       m.field 0, :alert_ien, :integer
       m.field 1, :user_duz, :integer
@@ -576,6 +628,7 @@ module VistaRpc
 
     # XQAL MARK READ — write result: SUCCESS^ERROR
     DataMapper.define(:xqal_mark_read) do |m|
+      m.backend :vista
       m.rpc "XQAL MARK READ"
       m.field 0, :success, :boolean
       m.field 1, :error
@@ -583,6 +636,7 @@ module VistaRpc
 
     # XQAL FORWARD — write result: SUCCESS^NEW_ALERT_IEN^ERROR
     DataMapper.define(:xqal_forward) do |m|
+      m.backend :vista
       m.rpc "XQAL FORWARD"
       m.field 0, :success, :boolean
       m.field 1, :new_alert_ien, :integer
@@ -596,6 +650,7 @@ module VistaRpc
     # ORWRP TYPES — report type list (multi-line)
     # Format: IEN^NAME^DESCRIPTION^OWNER
     DataMapper.define(:report_types) do |m|
+      m.backend :vista
       m.rpc "ORWRP TYPES"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -606,6 +661,7 @@ module VistaRpc
     # ORQQPX REMINDERS LIST — clinical reminders (multi-line)
     # Format: IEN^NAME^STATUS^DUE_DATE^LAST_DONE^PRIORITY
     DataMapper.define(:reminders_list) do |m|
+      m.backend :vista
       m.rpc "ORQQPX REMINDERS LIST"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -617,6 +673,7 @@ module VistaRpc
 
     # ORQQPX REMINDER DETAIL — single reminder detail (text blob)
     DataMapper.define(:reminder_detail) do |m|
+      m.backend :vista
       m.rpc "ORQQPX REMINDER DETAIL"
       m.text_blob :detail_text
     end
@@ -627,18 +684,21 @@ module VistaRpc
 
     # ORWPT DIEDON — deceased check (FileMan date or "0")
     DataMapper.define(:patient_deceased) do |m|
+      m.backend :vista
       m.rpc "ORWPT DIEDON"
       m.scalar :deceased_date, :fileman_date
     end
 
     # ORWPT SELCHK — sensitive record check ("1" if sensitive)
     DataMapper.define(:patient_sensitive) do |m|
+      m.backend :vista
       m.rpc "ORWPT SELCHK"
       m.scalar :sensitive, :boolean
     end
 
     # ORWU HASKEY — security key check
     DataMapper.define(:user_has_key) do |m|
+      m.backend :vista
       m.rpc "ORWU HASKEY"
       m.scalar :has_key, :boolean
     end
@@ -649,6 +709,7 @@ module VistaRpc
 
     # XUS SIGNON SETUP — signon setup (returns "OK" or error)
     DataMapper.define(:signon_setup) do |m|
+      m.backend :vista
       m.rpc "XUS SIGNON SETUP"
       m.scalar :status, :string
     end
@@ -661,6 +722,7 @@ module VistaRpc
     # Line 4: unused
     # Line 5: user class
     DataMapper.define(:av_code) do |m|
+      m.backend :vista
       m.rpc "XUS AV CODE"
       m.line_field 0, :duz, :integer
       m.line_field 1, :error_code, :integer
@@ -671,12 +733,14 @@ module VistaRpc
 
     # XUS CVC — CVC verification
     DataMapper.define(:cvc_verify) do |m|
+      m.backend :vista
       m.rpc "XUS CVC"
       m.line_field 0, :result_code, :integer
     end
 
     # ORWU USERKEYS — user security keys (multi-line, one key per line)
     DataMapper.define(:user_keys) do |m|
+      m.backend :vista
       m.rpc "ORWU USERKEYS"
       m.field 0, :key_name
     end
@@ -687,12 +751,14 @@ module VistaRpc
 
     # ORWRP REPORT TEXT — health summary report text
     DataMapper.define(:report_text) do |m|
+      m.backend :vista
       m.rpc "ORWRP REPORT TEXT"
       m.text_blob :report_text
     end
 
     # ORWRP TYPE COMPONENTS — report type component list
     DataMapper.define(:report_type_components) do |m|
+      m.backend :vista
       m.rpc "ORWRP TYPE COMPONENTS"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -702,12 +768,14 @@ module VistaRpc
 
     # GMTS PWH REPORT — patient health summary report text
     DataMapper.define(:health_summary_report) do |m|
+      m.backend :vista
       m.rpc "GMTS PWH REPORT"
       m.text_blob :report_text
     end
 
     # GMTS FLOWSHEET LIST — flowsheet definitions (multi-line)
     DataMapper.define(:flowsheet_list) do |m|
+      m.backend :vista
       m.rpc "GMTS FLOWSHEET LIST"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -716,12 +784,14 @@ module VistaRpc
 
     # GMTS FLOWSHEET DATA — patient flowsheet table text
     DataMapper.define(:flowsheet_data) do |m|
+      m.backend :vista
       m.rpc "GMTS FLOWSHEET DATA"
       m.text_blob :flowsheet_text
     end
 
     # GMTS MAINT ITEMS — maintenance items (multi-line)
     DataMapper.define(:maint_items) do |m|
+      m.backend :vista
       m.rpc "GMTS MAINT ITEMS"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -734,6 +804,7 @@ module VistaRpc
 
     # ORWLRR REPORT — full lab report text
     DataMapper.define(:lab_report) do |m|
+      m.backend :vista
       m.rpc "ORWLRR REPORT"
       m.text_blob :report_text
     end
@@ -742,6 +813,7 @@ module VistaRpc
     # Format: IEN^REPORT_NAME^LOINC_CODE^STATUS^COLLECTION_DATE^RESULT_DATE^
     #         VERIFIER_DUZ^VERIFIER_NAME^RESULT_IENS^INTERPRETATION
     DataMapper.define(:lab_report_list) do |m|
+      m.backend :vista
       m.rpc "ORWLRR REPORT LIST"
       m.field 0, :ien,             :integer
       m.field 1, :report_name
@@ -757,6 +829,7 @@ module VistaRpc
 
     # ORWRA REPORT — full radiology report text
     DataMapper.define(:radiology_report) do |m|
+      m.backend :vista
       m.rpc "ORWRA REPORT"
       m.text_blob :report_text
     end
@@ -767,6 +840,7 @@ module VistaRpc
 
     # ORQQPS DETAIL — medication detail (text blob)
     DataMapper.define(:medication_detail) do |m|
+      m.backend :vista
       m.rpc "ORQQPS DETAIL"
       m.text_blob :detail_text
     end
@@ -776,6 +850,7 @@ module VistaRpc
     #             AUTHOR_DUZ^AUTHOR_NAME^GOAL_IENS^ACTIVITY^(unused)^PATIENT_DFN
     # Subsequent lines: free-text description (joined by the API module).
     DataMapper.define(:care_plan_detail) do |m|
+      m.backend :vista
       m.rpc "ORQQCP GET"
       m.field 0,  :title
       m.field 1,  :status
@@ -795,6 +870,7 @@ module VistaRpc
     # First line: TEAM_NAME^STATUS^CATEGORY^START_DATE^END_DATE^
     #             PARTICIPANTS^REASON_CODE^REASON_DISPLAY^ORGANIZATION^PATIENT_DFN
     DataMapper.define(:care_team_detail) do |m|
+      m.backend :vista
       m.rpc "ORQQCT GET"
       m.field 0, :team_name
       m.field 1, :status
@@ -815,6 +891,7 @@ module VistaRpc
     #             PROVIDER_DUZ^PROVIDER_NAME^(unused)^PATIENT_DFN
     # Subsequent lines: free-text note (joined by the API module).
     DataMapper.define(:goal_detail) do |m|
+      m.backend :vista
       m.rpc "ORQQGO GET"
       m.field 0,  :goal_text
       m.field 1,  :lifecycle_status
@@ -831,6 +908,7 @@ module VistaRpc
 
     # ORWPCE PROCEDURE GET — single procedure
     DataMapper.define(:procedure_detail) do |m|
+      m.backend :vista
       m.rpc "ORWPCE PROCEDURE GET"
       m.field 0, :ien
       m.field 1, :name
@@ -843,6 +921,7 @@ module VistaRpc
     # ORWPCE IMPLANT GET — single implanted device
     # Format: UDI^DEVICE_ID^STATUS^DEVICE_NAME^MANUFACTURER^MODEL^SERIAL^LOT^MFG_DATE^EXP_DATE^TYPE_CODE^TYPE_DISPLAY^DISTINCT_ID^PATIENT_DFN
     DataMapper.define(:device_detail) do |m|
+      m.backend :vista
       m.rpc "ORWPCE IMPLANT GET"
       m.field 0, :udi
       m.field 1, :device_identifier
@@ -867,6 +946,7 @@ module VistaRpc
     # ORWPT LIST RECENT — recent patients (multi-line)
     # Format: DFN^NAME^LAST_ACCESSED
     DataMapper.define(:patient_recent) do |m|
+      m.backend :vista
       m.rpc "ORWPT LIST RECENT"
       m.field 0, :dfn, :integer
       m.field 1, :name
@@ -875,6 +955,7 @@ module VistaRpc
 
     # ORWPT SAVE RECENT — write-only (success/failure)
     DataMapper.define(:patient_save_recent) do |m|
+      m.backend :vista
       m.rpc "ORWPT SAVE RECENT"
       m.scalar :success, :boolean
     end
@@ -886,6 +967,7 @@ module VistaRpc
     # XU KEY LIST — key list (multi-line)
     # Format per line: IEN^NAME
     DataMapper.define(:key_list) do |m|
+      m.backend :vista
       m.rpc "XU KEY LIST"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -893,6 +975,7 @@ module VistaRpc
 
     # XU KEY GRANT — grant result
     DataMapper.define(:key_grant) do |m|
+      m.backend :vista
       m.rpc "XU KEY GRANT"
       m.field 0, :success, :boolean
       m.field 1, :message
@@ -900,6 +983,7 @@ module VistaRpc
 
     # XU KEY REVOKE — revoke result
     DataMapper.define(:key_revoke) do |m|
+      m.backend :vista
       m.rpc "XU KEY REVOKE"
       m.field 0, :success, :boolean
       m.field 1, :message
@@ -911,6 +995,7 @@ module VistaRpc
 
     # PSO NEW RX — new prescription result
     DataMapper.define(:prescription_new) do |m|
+      m.backend :vista
       m.rpc "PSO NEW RX"
       m.field 0, :success, :boolean
       m.field 1, :rx_ien_or_error
@@ -918,6 +1003,7 @@ module VistaRpc
 
     # PSO ERX STATUS — e-prescribe status
     DataMapper.define(:erx_status) do |m|
+      m.backend :vista
       m.rpc "PSO ERX STATUS"
       m.field 0, :status
       m.field 1, :message
@@ -925,6 +1011,7 @@ module VistaRpc
 
     # PSO CANCEL RX — cancellation result
     DataMapper.define(:prescription_cancel) do |m|
+      m.backend :vista
       m.rpc "PSO CANCEL RX"
       m.field 0, :success, :boolean
       m.field 1, :message
@@ -937,6 +1024,7 @@ module VistaRpc
     # form a tree (roots → items) with each leaf carrying boilerplate text.
 
     DataMapper.define(:template_roots) do |m|
+      m.backend :vista
       m.rpc "TIU TEMPLATE GETROOTS"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -944,6 +1032,7 @@ module VistaRpc
     end
 
     DataMapper.define(:template_items) do |m|
+      m.backend :vista
       m.rpc "TIU TEMPLATE GETITEMS"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -952,16 +1041,19 @@ module VistaRpc
     end
 
     DataMapper.define(:template_boilerplate) do |m|
+      m.backend :vista
       m.rpc "TIU TEMPLATE GETBOIL"
       m.text_blob :body
     end
 
     DataMapper.define(:template_text) do |m|
+      m.backend :vista
       m.rpc "TIU TEMPLATE GETTEXT"
       m.text_blob :body
     end
 
     DataMapper.define(:template_access_level) do |m|
+      m.backend :vista
       m.rpc "TIU TEMPLATE ACCESS LEVEL"
       m.scalar :level
     end
@@ -972,11 +1064,13 @@ module VistaRpc
     # Field positions are best-effort pending wider trace capture.
 
     DataMapper.define(:tiu_create_record) do |m|
+      m.backend :vista
       m.rpc "TIU CREATE RECORD"
       m.scalar :note_ien
     end
 
     DataMapper.define(:tiu_documents_by_context) do |m|
+      m.backend :vista
       m.rpc "TIU DOCUMENTS BY CONTEXT"
       m.field 0, :ien, :integer
       m.field 1, :title
@@ -987,26 +1081,31 @@ module VistaRpc
     end
 
     DataMapper.define(:tiu_get_record_text) do |m|
+      m.backend :vista
       m.rpc "TIU GET RECORD TEXT"
       m.text_blob :body
     end
 
     DataMapper.define(:tiu_authorization) do |m|
+      m.backend :vista
       m.rpc "TIU AUTHORIZATION"
       m.scalar :allowed, :boolean
     end
 
     DataMapper.define(:tiu_lock_record) do |m|
+      m.backend :vista
       m.rpc "TIU LOCK RECORD"
       m.scalar :locked, :boolean
     end
 
     DataMapper.define(:tiu_unlock_record) do |m|
+      m.backend :vista
       m.rpc "TIU UNLOCK RECORD"
       m.scalar :unlocked, :boolean
     end
 
     DataMapper.define(:tiu_set_document_text) do |m|
+      m.backend :vista
       m.rpc "TIU SET DOCUMENT TEXT"
       m.scalar :result
     end
@@ -1016,11 +1115,13 @@ module VistaRpc
     # ========================================================================
 
     DataMapper.define(:tiu_valid_signature) do |m|
+      m.backend :vista
       m.rpc "ORWU VALIDSIG"
       m.scalar :valid, :boolean
     end
 
     DataMapper.define(:tiu_sign_record) do |m|
+      m.backend :vista
       m.rpc "TIU SIGN RECORD"
       m.scalar :result
     end
@@ -1029,6 +1130,7 @@ module VistaRpc
     # "what signing action is this user allowed to take on this note?".
     # Returns a code like S/C/A/empty; mapped to a symbol by the API.
     DataMapper.define(:tiu_which_signature_action) do |m|
+      m.backend :vista
       m.rpc "TIU WHICH SIGNATURE ACTION"
       m.scalar :code
     end
@@ -1039,6 +1141,7 @@ module VistaRpc
     # Field positions are best-effort pending wider trace capture.
 
     DataMapper.define(:orders_unsigned) do |m|
+      m.backend :vista
       m.rpc "ORWOR UNSIGN"
       m.field 0, :ien, :integer
       m.field 1, :patient_dfn, :integer
@@ -1049,6 +1152,7 @@ module VistaRpc
     end
 
     DataMapper.define(:orders_list) do |m|
+      m.backend :vista
       m.rpc "ORWORR AGET"
       m.field 0, :ien, :integer
       m.field 1, :order_text
@@ -1068,6 +1172,7 @@ module VistaRpc
     # ORWOR RESULT — result text for a single order IEN. Word-processing
     # shape (global array): the gateway returns a multi-line blob.
     DataMapper.define(:order_result) do |m|
+      m.backend :vista
       m.rpc "ORWOR RESULT"
       m.text_blob :result_text
     end
@@ -1077,6 +1182,7 @@ module VistaRpc
     # capture, but the engine-facing contract is a list of result
     # observations rather than the raw broker shape.
     DataMapper.define(:order_result_history) do |m|
+      m.backend :vista
       m.rpc "ORWOR RESULT HISTORY"
       m.field 0, :result_datetime, :fileman_datetime
       m.field 1, :value
@@ -1090,12 +1196,14 @@ module VistaRpc
     # on an order (release, sign, discontinue, etc). Takes ORDER_IEN and
     # the action code; returns a free-text blob.
     DataMapper.define(:order_action_text) do |m|
+      m.backend :vista
       m.rpc "ORWOR ACTION TEXT"
       m.text_blob :action_text
     end
 
     # ORWOR EXPIRED — boolean (1/0) for whether an order IEN is expired.
     DataMapper.define(:order_expired) do |m|
+      m.backend :vista
       m.rpc "ORWOR EXPIRED"
       m.scalar :expired, :boolean
     end
@@ -1103,6 +1211,7 @@ module VistaRpc
     # ORWOR SHEETS — order sheets available for a patient (active, delayed
     # release, transfer, etc). One row per sheet: IEN^NAME^TYPE^STATUS.
     DataMapper.define(:order_sheets) do |m|
+      m.backend :vista
       m.rpc "ORWOR SHEETS"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -1113,6 +1222,7 @@ module VistaRpc
     # ORWOR TSALL — site-level catalog of order sheets, independent of
     # patient. One row per sheet: IEN^NAME.
     DataMapper.define(:order_sheets_all) do |m|
+      m.backend :vista
       m.rpc "ORWOR TSALL"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -1124,6 +1234,7 @@ module VistaRpc
     # Field positions are best-effort pending wider trace capture.
 
     DataMapper.define(:symptom_search) do |m|
+      m.backend :vista
       m.rpc "ORWDAL32 SYMPTOMS"
       m.field 0, :ien, :integer
       m.field 1, :name
@@ -1140,6 +1251,7 @@ module VistaRpc
     #   iF^Food
     # The mapping returns the raw lines; api/symptom.rb parses the tree.
     DataMapper.define(:symptom_defaults) do |m|
+      m.backend :vista
       m.rpc "ORWDAL32 DEF"
       m.text_blob :tree_text
     end
@@ -1150,6 +1262,7 @@ module VistaRpc
     # Field positions are best-effort pending wider trace capture.
 
     DataMapper.define(:image_exams) do |m|
+      m.backend :vista
       m.rpc "ORWRA IMAGING EXAMS1"
       m.field 0, :ien, :integer
       m.field 1, :exam_type
