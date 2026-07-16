@@ -18,10 +18,29 @@ class VistaRpc::MappingsTest < Minitest::Test
   end
 
   def test_allergy_list
-    results = VistaRpc::DataMapper[:allergy_list].parse_many([ "PENICILLIN^RASH^MODERATE", "ASPIRIN^HIVES^SEVERE" ])
+    results = VistaRpc::DataMapper[:allergy_list].parse_many([ "PENICILLIN^RASH^MODERATE^42", "ASPIRIN^HIVES^SEVERE^7" ])
     assert_equal 2, results.size
     assert_equal "PENICILLIN", results[0][:allergen]
+    assert_equal 42, results[0][:allergy_ien]
     assert_equal "SEVERE", results[1][:severity]
+    assert_equal 7, results[1][:allergy_ien]
+  end
+
+  def test_allergy_detail
+    result = VistaRpc::DataMapper[:allergy_detail].parse_one(
+      "PENICILLIN^PROVIDER,ONE^PHYSICIAN^VERIFIED^OBSERVED^^DRUG^3150115^MODERATE^PENICILLINS^RASH;HIVES^No comments"
+    )
+    assert_equal "PENICILLIN", result[:allergen]
+    assert_equal "PROVIDER,ONE", result[:originator]
+    assert_equal "PHYSICIAN", result[:originator_title]
+    assert_equal "VERIFIED", result[:verification_status]
+    assert_equal "OBSERVED", result[:observed_historical]
+    assert_equal "DRUG", result[:type]
+    assert_equal Date.new(2015, 1, 15), result[:observation_date]
+    assert_equal "MODERATE", result[:severity]
+    assert_equal "PENICILLINS", result[:drug_class]
+    assert_equal "RASH;HIVES", result[:symptoms]
+    assert_equal "No comments", result[:comments]
   end
 
   def test_practitioner_info
@@ -42,7 +61,7 @@ class VistaRpc::MappingsTest < Minitest::Test
   def test_stock_vista_mappings_registered
     expected = %i[
       patient_select patient_id_info patient_list patient_ssn
-      patient_appointments allergy_list problem_list vitals
+      patient_appointments allergy_list allergy_detail problem_list vitals
       practitioner_info practitioner_list user_management_user_list
       medication_list care_plan_list care_team_list goal_list
       procedure_list device_list lab_result_list radiology_list

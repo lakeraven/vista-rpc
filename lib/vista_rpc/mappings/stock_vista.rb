@@ -83,13 +83,38 @@ module VistaRpc
     end
 
     # ORQQAL LIST — patient allergies (multi-line)
-    # Format: ALLERGEN^REACTION^SEVERITY
+    # M source: ORQQAL.m, tag LIST
+    # Format: ALLERGEN^REACTION^SEVERITY^ALLERGY_IEN
+    # The ALLERGY_IEN is the record number from Patient Allergies file #120.8.
     DataMapper.define(:allergy_list) do |m|
       m.backend :vista
+      m.source "ORQQAL.m LIST"
       m.rpc "ORQQAL LIST"
       m.field 0, :allergen
       m.field 1, :reaction
       m.field 2, :severity
+      m.field 3, :allergy_ien, :integer
+    end
+
+    # ORQQAL DETAIL — detailed allergy/adverse reaction info
+    # M source: ORQQAL.m, tag DETAIL
+    # Format: ALLERGEN^ORIGINATOR^ORIGINATOR_TITLE^VERIFIED^OBSERVED_HISTORICAL^
+    #         ^TYPE^OBSERVATION_DATE^SEVERITY^DRUG_CLASS^SYMPTOMS^COMMENTS
+    DataMapper.define(:allergy_detail) do |m|
+      m.backend :vista
+      m.source "ORQQAL.m DETAIL"
+      m.rpc "ORQQAL DETAIL"
+      m.field 0,  :allergen
+      m.field 1,  :originator
+      m.field 2,  :originator_title
+      m.field 3,  :verification_status
+      m.field 4,  :observed_historical
+      m.field 6,  :type
+      m.field 7,  :observation_date, :fileman_date
+      m.field 8,  :severity
+      m.field 9,  :drug_class
+      m.field 10, :symptoms
+      m.field 11, :comments
     end
 
     # ORQQPL LIST — patient problem list (multi-line)
