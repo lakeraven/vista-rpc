@@ -67,13 +67,17 @@ class VistaRpc::MappingsTest < Minitest::Test
     assert_equal "GLUCOSE: 95 mg/dL (Reference: 70-100)\nPOTASSIUM: 4.2 mEq/L (Reference: 3.5-5.0)\n---", text
   end
 
+  # Wire order verified against LIST^ORQQAL and live VEHU rows:
+  # ALLERGY_IEN^ALLERGEN^SEVERITY^REACTIONS ("; "-joined symptoms).
   def test_allergy_list
-    results = VistaRpc::DataMapper[:allergy_list].parse_many([ "PENICILLIN^RASH^MODERATE^42", "ASPIRIN^HIVES^SEVERE^7" ])
+    results = VistaRpc::DataMapper[:allergy_list].parse_many([ "42^PENICILLIN^MODERATE^RASH", "7^ASPIRIN^SEVERE^HIVES; ANOREXIA" ])
     assert_equal 2, results.size
-    assert_equal "PENICILLIN", results[0][:allergen]
     assert_equal 42, results[0][:allergy_ien]
+    assert_equal "PENICILLIN", results[0][:allergen]
+    assert_equal "RASH", results[0][:reaction]
     assert_equal "SEVERE", results[1][:severity]
     assert_equal 7, results[1][:allergy_ien]
+    assert_equal "HIVES; ANOREXIA", results[1][:reaction]
   end
 
   def test_allergy_detail

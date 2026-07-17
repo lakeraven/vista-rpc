@@ -60,6 +60,59 @@ class ClinicalApiTest < Minitest::Test
     assert_equal [], VistaRpc::Lab.for_patient(0)
   end
 
+  # Wire row verified live on VEHU (DFN 100001):
+  # 733^Hypertension (ICD-9-CM 401.9)^A^401.9^3050407^3070410^NSC^...
+  def test_problem_for_patient_sends_status_param_and_parses_rows
+    client = with_client('ORQQPL LIST' => ['733^Hypertension^A^401.9^3050407^3070410^NSC'])
+    results = VistaRpc::Problem.for_patient(100_001)
+
+    assert_equal({ rpc: 'ORQQPL LIST', params: ['100001', ''] }, client.calls.first)
+    assert_equal 1, results.length
+    assert_equal '733', results.first[:ien]
+    assert_equal 'Hypertension', results.first[:description]
+    assert_equal 'A', results.first[:status]
+    assert_equal '401.9', results.first[:icd_code]
+    assert_equal 'NSC', results.first[:service_connected]
+  end
+
+  def test_problem_for_patient_maps_status_keyword
+    client = with_client('ORQQPL LIST' => [])
+    VistaRpc::Problem.for_patient(1, status: :active)
+
+    assert_equal ['1', 'A'], client.calls.first[:params]
+  end
+
+  def test_problem_for_patient_rejects_unknown_status
+    with_client({})
+
+    assert_raises(ArgumentError) { VistaRpc::Problem.for_patient(1, status: :bogus) }
+  end
+
+  def test_problem_for_patient_filters_no_problems_sentinel
+    with_client('ORQQPL LIST' => ['^No problems found.'])
+
+    assert_equal [], VistaRpc::Problem.for_patient(1)
+  end
+
+  # Wire row verified live on VEHU (DFN 100022):
+  # 971^ERYTHROMYCIN^MODERATE^ANOREXIA; DIARRHEA; DROWSINESS; HIVES
+  def test_allergy_for_patient_fetches_allergy_list_mapping
+    client = with_client('ORQQAL LIST' => ['701^PENICILLIN^MODERATE^HIVES; ANOREXIA'])
+    results = VistaRpc::Allergy.for_patient(1)
+
+    assert_equal({ rpc: 'ORQQAL LIST', params: ['1'] }, client.calls.first)
+    assert_equal 701, results.first[:allergy_ien]
+    assert_equal 'PENICILLIN', results.first[:allergen]
+    assert_equal 'MODERATE', results.first[:severity]
+    assert_equal 'HIVES; ANOREXIA', results.first[:reaction]
+  end
+
+  def test_allergy_for_patient_filters_sentinel_rows
+    with_client('ORQQAL LIST' => ['^No Allergy Assessment'])
+
+    assert_equal [], VistaRpc::Allergy.for_patient(1)
+  end
+
   private
 
   def assert_lab_interim_call(call)

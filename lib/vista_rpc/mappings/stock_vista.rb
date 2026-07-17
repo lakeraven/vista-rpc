@@ -84,16 +84,21 @@ module VistaRpc
 
     # ORQQAL LIST — patient allergies (multi-line)
     # M source: ORQQAL.m, tag LIST
-    # Format: ALLERGEN^REACTION^SEVERITY^ALLERGY_IEN
-    # The ALLERGY_IEN is the record number from Patient Allergies file #120.8.
+    # Format: ALLERGY_IEN^ALLERGEN^SEVERITY^REACTIONS
+    # Verified against the LIST^ORQQAL code and live VEHU rows
+    # (e.g. "971^ERYTHROMYCIN^MODERATE^ANOREXIA; DIARRHEA"): the routine's
+    # own header comment claims allergen-first order, but the code emits
+    # GMRARXN piece 3 (the file #120.8 IEN) first, then allergen, then
+    # severity, with the SIGNS tag appending "; "-joined reactions/symptoms
+    # as the 4th piece.
     DataMapper.define(:allergy_list) do |m|
       m.backend :vista
       m.source "ORQQAL.m LIST"
       m.rpc "ORQQAL LIST"
-      m.field 0, :allergen
-      m.field 1, :reaction
+      m.field 0, :allergy_ien, :integer
+      m.field 1, :allergen
       m.field 2, :severity
-      m.field 3, :allergy_ien, :integer
+      m.field 3, :reaction
     end
 
     # ORQQAL DETAIL — detailed allergy/adverse reaction info
