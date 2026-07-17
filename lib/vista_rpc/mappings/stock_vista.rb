@@ -122,18 +122,25 @@ module VistaRpc
     # Params: DFN, STATUS — (A)ctive, (I)nactive, "" all. STATUS is required:
     # LIST^GMPLUTL2 reads it unguarded, so omitting it raises the M error
     # "Undefined local variable: STATUS" (verified against VEHU, 2026-07-17).
-    # Format: IEN^STATUS^DESCRIPTION^ICD_CODE^ONSET_DATE^RECORDED_DATE^PROVIDER_DUZ
+    # Format (from ORPY construction in LIST^ORQQPL over LIST^GMPLUTL3 pieces):
+    #   IEN^NARRATIVE^STATUS^ICD_CODE^ONSET_DATE^MODIFIED_DATE^SERVICE_CONNECTED^
+    #   SPECIAL_EXPOSURES^TRANSCRIBED^PRIORITY^^DETAIL_FLAG^INACTIVE_CODE_MARK^
+    #   SNOMED_CONCEPT^SNOMED_DESIGNATION^ICD_CODING_SYSTEM^HEADER_FLAG
+    # Note piece 2 is the provider narrative (description) and piece 3 the
+    # status — LIST^ORQQPL swaps GMPL pieces 2 and 3. Piece 6 is date last
+    # modified (not date recorded) and piece 7 is the SC/NSC flag (not a
+    # provider DUZ). Trailing SNOMED/coding-system pieces are not yet mapped.
     DataMapper.define(:problem_list) do |m|
       m.backend :vista
       m.source "ORQQPL.m LIST"
       m.rpc "ORQQPL LIST"
       m.field 0, :ien
-      m.field 1, :status
-      m.field 2, :description
+      m.field 1, :description
+      m.field 2, :status
       m.field 3, :icd_code, :string, terminology: :icd10
       m.field 4, :onset_date,    :fileman_date
-      m.field 5, :recorded_date, :fileman_date
-      m.field 6, :provider_duz, :string, pointer: { file: 200 }
+      m.field 5, :modified_date, :fileman_date
+      m.field 6, :service_connected
     end
 
     # ORQQPL coverage — problem-list mutations + lookups + audit. Wire field
@@ -369,18 +376,21 @@ module VistaRpc
     # per OCL^PSOORRL defaults). Both date params are required: OCL^PSOORRL
     # reads them unguarded, so omitting them raises the M error
     # "Undefined local variable: ORSTRTDT" (verified against VEHU, 2026-07-17).
-    # Format: IEN^DRUG_NAME^SIG^STATUS^LAST_FILL^REFILLS^PROVIDER
+    # Format (per LIST^ORQQPS header and live VEHU rows, e.g.
+    # "1448P;I^IBUPROFEN TAB^^PO^Q8H"):
+    #   ID^NAMEFORM^STOP_DATE^ROUTE^SCHEDULE^REFILLS_REMAINING
+    # ID is the pharmacy order id with a ;I (inpatient) / ;O (outpatient)
+    # suffix. NAMEFORM is the drug name text, not a file #50 pointer.
     DataMapper.define(:medication_list) do |m|
       m.backend :vista
       m.source "ORQQPS.m LIST"
       m.rpc "ORQQPS LIST"
       m.field 0, :ien
-      m.field 1, :drug_name, :string, terminology: :rxnorm, pointer: { file: 50 }
-      m.field 2, :sig
-      m.field 3, :status
-      m.field 4, :last_fill,   :fileman_date
-      m.field 5, :refills,     :integer
-      m.field 6, :provider, :string, pointer: { file: 200 }
+      m.field 1, :drug_name, :string, terminology: :rxnorm
+      m.field 2, :stop_date, :fileman_date
+      m.field 3, :route
+      m.field 4, :schedule
+      m.field 5, :refills,   :integer
     end
 
     # ORQQCP LIST — care plan list (multi-line)
