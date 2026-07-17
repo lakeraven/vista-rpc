@@ -118,9 +118,14 @@ module VistaRpc
     end
 
     # ORQQPL LIST — patient problem list (multi-line)
+    # M source: ORQQPL.m, tag LIST(ORPY,DFN,STATUS)
+    # Params: DFN, STATUS — (A)ctive, (I)nactive, "" all. STATUS is required:
+    # LIST^GMPLUTL2 reads it unguarded, so omitting it raises the M error
+    # "Undefined local variable: STATUS" (verified against VEHU, 2026-07-17).
     # Format: IEN^STATUS^DESCRIPTION^ICD_CODE^ONSET_DATE^RECORDED_DATE^PROVIDER_DUZ
     DataMapper.define(:problem_list) do |m|
       m.backend :vista
+      m.source "ORQQPL.m LIST"
       m.rpc "ORQQPL LIST"
       m.field 0, :ien
       m.field 1, :status
@@ -359,9 +364,15 @@ module VistaRpc
     # ========================================================================
 
     # ORQQPS LIST — medication list (multi-line)
+    # M source: ORQQPS.m, tag LIST(ORY,ORPT,ORSTRTDT,ORSTOPDT)
+    # Params: DFN, ORSTRTDT, ORSTOPDT (FileMan dates; "" = current profile
+    # per OCL^PSOORRL defaults). Both date params are required: OCL^PSOORRL
+    # reads them unguarded, so omitting them raises the M error
+    # "Undefined local variable: ORSTRTDT" (verified against VEHU, 2026-07-17).
     # Format: IEN^DRUG_NAME^SIG^STATUS^LAST_FILL^REFILLS^PROVIDER
     DataMapper.define(:medication_list) do |m|
       m.backend :vista
+      m.source "ORQQPS.m LIST"
       m.rpc "ORQQPS LIST"
       m.field 0, :ien
       m.field 1, :drug_name, :string, terminology: :rxnorm, pointer: { file: 50 }
