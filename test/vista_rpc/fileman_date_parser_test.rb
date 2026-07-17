@@ -78,8 +78,30 @@ class VistaRpc::FilemanDateParserTest < Minitest::Test
     assert_nil P.parse_datetime("3250101.091560")
   end
 
-  def test_parse_datetime_returns_nil_for_unsupported_length
-    assert_nil P.parse_datetime("3250101.09153")
+  # M drops trailing zeros from the FileMan time fraction — ".15124" means
+  # 15:12:40 (seen in live VEHU ORWGRPC ITEMDATA rows), ".1" means 10:00:00.
+  def test_parse_datetime_with_odd_length_time_fraction
+    result = P.parse_datetime("3070529.15124")
+    assert_equal 2007, result.year
+    assert_equal 15, result.hour
+    assert_equal 12, result.min
+    assert_equal 40, result.sec
+  end
+
+  def test_parse_datetime_with_single_digit_time_fraction
+    result = P.parse_datetime("3250101.1")
+    assert_equal 10, result.hour
+    assert_equal 0, result.min
+  end
+
+  def test_parse_datetime_handles_five_digit_fraction_as_dropped_zero
+    result = P.parse_datetime("3250101.09153")
+    assert_equal 9, result.hour
+    assert_equal 15, result.min
+    assert_equal 30, result.sec
+  end
+
+  def test_parse_datetime_returns_nil_beyond_six_fraction_digits
     assert_nil P.parse_datetime("3250101.0915334")
   end
 

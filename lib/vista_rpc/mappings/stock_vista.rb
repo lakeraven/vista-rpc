@@ -497,24 +497,63 @@ module VistaRpc
     # LAB & RADIOLOGY (ORWLRR*, ORWRA*)
     # ========================================================================
 
-    # ORWLRR INTERIM — lab result list (multi-line), exposed as the CPRS RPC
-    # "ORWLRR INTERIM". The historical mapping name `lab_result_list` is kept
-    # for backwards compatibility.
-    # M source: ORWLRR.m, tag INTERIM
-    # Input: three separate parameters: DFN, DATE1 (FileMan), DATE2 (FileMan).
-    # Format: IEN^TEST_NAME^RESULT^UNITS^REF_RANGE^ABNORMAL_FLAG^COLLECTION_DATE^STATUS
-    DataMapper.define(:lab_result_list) do |m|
+    # ORWLRR INTERIM — interim lab report (human-readable text, NOT delimited
+    # rows: header lines, fixed-width test rows, "===" separators, trailing
+    # performing-lab block). Verified against live VEHU 2026-07-17; the
+    # previous `lab_result_list` caret-field mapping here described a wire
+    # format that does not exist.
+    # M source: ORWLRR.m, tag INTERIM → SELECT^LR7OGM
+    # Params: DFN, DATE1, DATE2 — MOST-RECENT-FIRST: SELECT^LR7OGM inverts
+    # the dates itself and iterates reverse-chronologically, so forward order
+    # silently returns "No Data Found".
+    DataMapper.define(:lab_interim_report) do |m|
       m.backend :vista
       m.source "ORWLRR.m INTERIM"
       m.rpc "ORWLRR INTERIM"
-      m.field 0, :ien,             :integer
-      m.field 1, :test_name
-      m.field 2, :result
-      m.field 3, :units
-      m.field 4, :reference_range
-      m.field 5, :abnormal_flag
-      m.field 6, :collection_date, :fileman_datetime
-      m.field 7, :status
+      m.text_blob :report_text
+    end
+
+    # ORWGRPC ITEMS — a patient's graphable items of one type; TYPE "63"
+    # yields the lab tests the patient has results for.
+    # M source: ORWGAPI1.m, tag LAB (via ITEMS^ORWGAPIR)
+    # Params: DFN, TYPE ("63" for labs).
+    # Format: FILE^TEST_IEN^^TEST_NAME^^NEWEST_RESULT_DT^COUNT^DISPLAY_GROUP^DEPT
+    # Verified live on VEHU (DFN 100022): "63^3^^HGB^^3150603.1454^10^lab - HEMATOLOGY^HE"
+    DataMapper.define(:lab_graph_items) do |m|
+      m.backend :vista
+      m.source "ORWGAPI1.m LAB"
+      m.rpc "ORWGRPC ITEMS"
+      m.field 0, :file_number
+      m.field 1, :test_ien, :integer
+      m.field 3, :test_name
+      m.field 5, :newest_result, :fileman_datetime
+      m.field 7, :display_group
+      m.field 8, :department
+    end
+
+    # ORWGRPC ITEMDATA — datapoints for one item on a patient. For chem labs
+    # (ITEM "63^<test ien>") each row is a verified result from the clinical
+    # reminders index (^PXRMINDX(63)).
+    # M source: ORWGAPI3.m, tag LAB (RESULT construction lines 72-76)
+    # Params: ITEM ("63^<test ien>"), START (FileMan date; iterates BACKWARD
+    # from here — pass a future date to get everything), DFN.
+    # Format: FILE^TEST_IEN^COLLECTION_DT^^RESULT^FLAG^SPECIMEN_CODE^
+    #         SPECIMEN_NAME^COMMENT_FLAG^REF_LO!REF_HI^UNITS
+    # Verified live on VEHU (DFN 100022): "63^3^3150603.1454^^6.0^L^70^BLOOD^^14!18^g/dL"
+    DataMapper.define(:lab_graph_data) do |m|
+      m.backend :vista
+      m.source "ORWGAPI3.m LAB"
+      m.rpc "ORWGRPC ITEMDATA"
+      m.field 0,  :file_number
+      m.field 1,  :test_ien, :integer
+      m.field 2,  :collection_date, :fileman_datetime
+      m.field 4,  :result
+      m.field 5,  :abnormal_flag
+      m.field 6,  :specimen_code
+      m.field 7,  :specimen
+      m.field 8,  :has_comment
+      m.field 9,  :reference_range
+      m.field 10, :units
     end
 
     # ORWRA REPORT LIST — radiology report list (multi-line)

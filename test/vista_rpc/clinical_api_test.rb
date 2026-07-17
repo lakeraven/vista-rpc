@@ -35,21 +35,49 @@ class ClinicalApiTest < Minitest::Test
     assert_equal({ rpc: 'ORQQVI VITALS', params: ['1'] }, client.calls.first)
   end
 
-  def test_lab_for_patient_sends_three_separate_params
-    client = with_client('ORWLRR INTERIM' => [])
-    VistaRpc::Lab.for_patient(1)
+  def test_lab_for_patient_enumerates_items_then_fetches_datapoints
+    client = with_client(
+      'ORWGRPC ITEMS' => ["63^3^^HGB^^#{recent_fm_datetime}^10^lab - HEMATOLOGY^HE"],
+      'ORWGRPC ITEMDATA' => ["63^3^#{recent_fm_datetime}^^6.0^L^70^BLOOD^^14!18^g/dL"]
+    )
+    results = VistaRpc::Lab.for_patient(1)
 
-    assert_lab_interim_call(client.calls.first)
+    assert_equal({ rpc: 'ORWGRPC ITEMS', params: %w[1 63] }, client.calls.first)
+    data_call = client.calls.last
+    assert_equal 'ORWGRPC ITEMDATA', data_call[:rpc]
+    assert_equal '63^3', data_call[:params][0]
+    assert_match(/\A\d{7}\z/, data_call[:params][1])
+    assert_equal '1', data_call[:params][2]
+
+    assert_equal 1, results.length
+    assert_equal 'HGB', results.first[:test_name]
+    assert_equal '6.0', results.first[:result]
+    assert_equal 'g/dL', results.first[:units]
+    assert_equal '14 - 18', results.first[:reference_range]
+    assert_equal 'final', results.first[:status]
   end
 
   def test_lab_for_patient_decorates_abnormal_results
-    with_client('ORWLRR INTERIM' => [
-                  '9001^718-7^13.5^g/dL^12.0-15.5^N^3250114.0830^final',
-                  '9002^2093-3^7.2^%^<5.7^H^3250114.0900^final'
-                ])
+    with_client(
+      'ORWGRPC ITEMS' => ["63^3^^HGB^^#{recent_fm_datetime}^10^lab - HEMATOLOGY^HE"],
+      'ORWGRPC ITEMDATA' => [
+        "63^3^#{recent_fm_datetime}^^13.5^N^70^BLOOD^^12.0!15.5^g/dL",
+        "63^3^#{recent_fm_datetime}^^7.2^H^70^BLOOD^^!^%"
+      ]
+    )
     results = VistaRpc::Lab.for_patient(1)
 
     assert_equal([false, true], results.map { |r| r[:abnormal] })
+    assert_nil results.last[:reference_range]
+  end
+
+  def test_lab_for_patient_filters_datapoints_outside_the_window
+    with_client(
+      'ORWGRPC ITEMS' => ["63^3^^HGB^^#{recent_fm_datetime}^10^lab - HEMATOLOGY^HE"],
+      'ORWGRPC ITEMDATA' => ["63^3^3010101.0800^^6.0^L^70^BLOOD^^14!18^g/dL"]
+    )
+
+    assert_equal [], VistaRpc::Lab.for_patient(1, days: 90)
   end
 
   def test_lab_for_patient_returns_empty_for_invalid_dfn
@@ -115,12 +143,10 @@ class ClinicalApiTest < Minitest::Test
 
   private
 
-  def assert_lab_interim_call(call)
-    params = call[:params]
-    assert_equal 'ORWLRR INTERIM', call[:rpc]
-    assert_equal 3, params.length
-    assert_equal '1', params[0]
-    params[1..].each { |date| assert_match(/\A\d{7}\z/, date) }
+  # FileMan datetime a few days back, so fixtures stay inside default windows.
+  def recent_fm_datetime
+    date = Date.today - 3
+    format('%d%02d%02d.0800', date.year - 1700, date.month, date.day)
   end
 
   def with_client(responses)

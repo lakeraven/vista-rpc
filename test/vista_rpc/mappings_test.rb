@@ -17,29 +17,41 @@ class VistaRpc::MappingsTest < Minitest::Test
     assert_equal 45, result[:age]
   end
 
-  def test_lab_result_list
-    results = VistaRpc::DataMapper[:lab_result_list].parse_many([
-      "123^GLUCOSE^95^mg/dL^70-100^N^3150115.0830^FINAL",
-      "124^POTASSIUM^4.2^mEq/L^3.5-5.0^N^3150115.0845^FINAL"
+  # Wire rows verified live on VEHU (DFN 100022):
+  # ITEMS:    63^3^^HGB^^3150603.1454^10^lab - HEMATOLOGY^HE
+  # ITEMDATA: 63^3^3150603.1454^^6.0^L^70^BLOOD^^14!18^g/dL
+  def test_lab_graph_items
+    results = VistaRpc::DataMapper[:lab_graph_items].parse_many([
+      "63^3^^HGB^^3150603.1454^10^lab - HEMATOLOGY^HE"
     ])
 
-    assert_equal 2, results.size
-    assert_equal 123, results[0][:ien]
-    assert_equal "GLUCOSE", results[0][:test_name]
-    assert_equal "95", results[0][:result]
-    assert_equal "mg/dL", results[0][:units]
-    assert_equal "70-100", results[0][:reference_range]
-    assert_equal "N", results[0][:abnormal_flag]
+    assert_equal 1, results.size
+    assert_equal 3, results[0][:test_ien]
+    assert_equal "HGB", results[0][:test_name]
+    assert_equal "lab - HEMATOLOGY", results[0][:display_group]
+    assert results[0][:newest_result].is_a?(Time)
+  end
+
+  def test_lab_graph_data
+    results = VistaRpc::DataMapper[:lab_graph_data].parse_many([
+      "63^3^3150603.1454^^6.0^L^70^BLOOD^^14!18^g/dL"
+    ])
+
+    assert_equal 1, results.size
+    assert_equal 3, results[0][:test_ien]
+    assert_equal "6.0", results[0][:result]
+    assert_equal "L", results[0][:abnormal_flag]
+    assert_equal "BLOOD", results[0][:specimen]
+    assert_equal "14!18", results[0][:reference_range]
+    assert_equal "g/dL", results[0][:units]
 
     result_time = results[0][:collection_date]
     assert result_time.is_a?(Time)
     assert_equal 2015, result_time.year
-    assert_equal 1, result_time.month
-    assert_equal 15, result_time.day
-    assert_equal 8, result_time.hour
-    assert_equal 30, result_time.min
-
-    assert_equal "FINAL", results[0][:status]
+    assert_equal 6, result_time.month
+    assert_equal 3, result_time.day
+    assert_equal 14, result_time.hour
+    assert_equal 54, result_time.min
   end
 
   def test_lab_report_list
@@ -153,7 +165,8 @@ class VistaRpc::MappingsTest < Minitest::Test
       patient_appointments allergy_list allergy_detail problem_list vitals
       practitioner_info practitioner_list user_management_user_list
       medication_list care_plan_list care_team_list goal_list
-      procedure_list device_list lab_result_list radiology_list
+      procedure_list device_list lab_interim_report lab_graph_items
+      lab_graph_data radiology_list
       user_info mailman_message mailman_messages_for_patient mailman_send
       mailman_reply mailman_thread mailman_inbox xqal_alert xqal_mark_read
       xqal_forward report_types reminders_list
