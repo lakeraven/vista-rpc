@@ -291,9 +291,17 @@ module VistaRpc
 
     # ORQQVI VITALS — patient vitals (multi-line)
     # Format: TYPE^VALUE^UNITS^DATE
+    # RPC "ORQQVI VITALS" (RPC file #8994) resolves to tag FASTVIT^ORQQVI,
+    # the CPRS GUI's most-recent-vitals call — verified against the RPC
+    # global entry in the VEHU container (ORQQVI VITALS^FASTVIT^ORQQVI^2^R).
+    # Not to be confused with the "ORQQVI VITALS FOR DATE RANGE" RPC, which
+    # resolves to tag VITALS^ORQQVI. See docs/research/vitals-rpc-decision.md
+    # for why this family was used instead of the roadmap's GMRV RPCs, and
+    # for a field-mapping caveat against FASTVIT's real return shape.
     DataMapper.define(:vitals) do |m|
       m.backend :vista
       m.rpc "ORQQVI VITALS"
+      m.source "ORQQVI.m FASTVIT"
       m.field 0, :type
       m.field 1, :value
       m.field 2, :units
