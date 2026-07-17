@@ -41,12 +41,13 @@ module VistaRpc
       return nil unless parts[0].match?(/\A\d{7}\z/)
 
       time_part = parts[1]
-      # Accept HH, HHMM, or HHMMSS — keeps round-trip symmetry with
-      # format_datetime(..., seconds: true).
-      return nil unless time_part.match?(/\A\d{2}(\d{2}(\d{2})?)?\z/)
+      # FileMan time is a decimal fraction of the day in HHMMSS positions,
+      # and M drops trailing zeros — ".15124" means 15:12:40, ".1" means
+      # 10:00:00 (verified against live VEHU ORWGRPC ITEMDATA rows). Accept
+      # any 1-6 digit fraction and right-pad to HHMMSS.
+      return nil unless time_part.match?(/\A\d{1,6}\z/)
 
-      time_part = time_part.ljust(4, "0") if time_part.length == 2
-      time_part = time_part.ljust(6, "0") if time_part.length == 4
+      time_part = time_part.ljust(6, "0")
 
       date = parse_date(parts[0])
       return nil if date.nil?
