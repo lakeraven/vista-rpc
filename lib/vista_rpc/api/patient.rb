@@ -28,5 +28,11 @@ module VistaRpc
 
       DataMapper.patient_ssn.fetch_one(ssn.to_s)
     end
+    # Chart-banner / brief-header projection is IHS-specific; stock VistA has
+    # no direct equivalent, so the VistA adapter returns nil.
+    def brief_header(_dfn)
+      nil
+    end
   end
 end
+

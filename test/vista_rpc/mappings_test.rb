@@ -17,6 +17,56 @@ class VistaRpc::MappingsTest < Minitest::Test
     assert_equal 45, result[:age]
   end
 
+  def test_lab_result_list
+    results = VistaRpc::DataMapper[:lab_result_list].parse_many([
+      "123^GLUCOSE^95^mg/dL^70-100^N^3150115.0830^FINAL",
+      "124^POTASSIUM^4.2^mEq/L^3.5-5.0^N^3150115.0845^FINAL"
+    ])
+
+    assert_equal 2, results.size
+    assert_equal 123, results[0][:ien]
+    assert_equal "GLUCOSE", results[0][:test_name]
+    assert_equal "95", results[0][:result]
+    assert_equal "mg/dL", results[0][:units]
+    assert_equal "70-100", results[0][:reference_range]
+    assert_equal "N", results[0][:abnormal_flag]
+
+    result_time = results[0][:collection_date]
+    assert result_time.is_a?(Time)
+    assert_equal 2015, result_time.year
+    assert_equal 1, result_time.month
+    assert_equal 15, result_time.day
+    assert_equal 8, result_time.hour
+    assert_equal 30, result_time.min
+
+    assert_equal "FINAL", results[0][:status]
+  end
+
+  def test_lab_report_list
+    results = VistaRpc::DataMapper[:lab_report_list].parse_many([
+      "CBC PROFILE^Cbc Profile ^Y^N^80",
+      "MICROBIOLOGY^Microbiology ^Y^N^80"
+    ])
+
+    assert_equal 2, results.size
+    assert_equal "CBC PROFILE",   results[0][:report_id]
+    assert_equal "Cbc Profile ", results[0][:report_name]
+    assert_equal "Y",            results[0][:enabled_flag]
+    assert_equal "N",            results[0][:requires_date_flag]
+    assert_equal 80,             results[0][:max_occurrences]
+  end
+
+  def test_lab_report_text_blob
+    m = VistaRpc::DataMapper[:lab_report]
+    text = m.parse_text([
+      "GLUCOSE: 95 mg/dL (Reference: 70-100)",
+      "POTASSIUM: 4.2 mEq/L (Reference: 3.5-5.0)",
+      "---"
+    ])
+
+    assert_equal "GLUCOSE: 95 mg/dL (Reference: 70-100)\nPOTASSIUM: 4.2 mEq/L (Reference: 3.5-5.0)\n---", text
+  end
+
   def test_allergy_list
     results = VistaRpc::DataMapper[:allergy_list].parse_many([ "PENICILLIN^RASH^MODERATE^42", "ASPIRIN^HIVES^SEVERE^7" ])
     assert_equal 2, results.size
@@ -41,6 +91,41 @@ class VistaRpc::MappingsTest < Minitest::Test
     assert_equal "PENICILLINS", result[:drug_class]
     assert_equal "RASH;HIVES", result[:symptoms]
     assert_equal "No comments", result[:comments]
+  end
+
+  def test_consult_list
+    results = VistaRpc::DataMapper[:consult_list].parse_many([
+      "123^3150115.0830^PENDING^Cardiology^Echocardiogram",
+      "456^3150116.0900^ACTIVE^Orthopedics^Knee MRI"
+    ])
+
+    assert_equal 2, results.size
+    assert_equal 123, results[0][:ien]
+    assert results[0][:request_date].is_a?(Time)
+    assert_equal 2015, results[0][:request_date].year
+    assert_equal 1, results[0][:request_date].month
+    assert_equal 15, results[0][:request_date].day
+    assert_equal 8, results[0][:request_date].hour
+    assert_equal 30, results[0][:request_date].min
+    assert_equal "PENDING", results[0][:status]
+    assert_equal "Cardiology", results[0][:consulting_service]
+    assert_equal "Echocardiogram", results[0][:procedure]
+  end
+
+  def test_consult_detail
+    result = VistaRpc::DataMapper[:consult_detail].parse_one(
+      "3150115^1^100000001^^^^^123.5^44^3150115.0830^GMRCOR REQUEST^1^1^7^1^8^10;PROVIDER,ONE^123^C^P^I^U^8925^3150115.0900"
+    )
+
+    assert_equal Date.new(2015, 1, 15), result[:entry_date]
+    assert_equal 1, result[:patient_dfn]
+    assert_equal "123.5", result[:to_service]
+    assert_equal Date.new(2015, 1, 15), result[:request_date]
+    assert_equal "GMRCOR REQUEST", result[:procedure_type]
+    assert_equal "1", result[:cprs_status]
+    assert_equal "10;PROVIDER,ONE", result[:sending_provider]
+    assert_equal "P", result[:request_type]
+    assert_equal Date.new(2015, 1, 15), result[:clinically_indicated_date]
   end
 
   def test_practitioner_info
@@ -82,6 +167,7 @@ class VistaRpc::MappingsTest < Minitest::Test
       template_roots template_items template_boilerplate template_text template_access_level
       orders_unsigned orders_list order_result order_result_history
       order_action_text order_expired order_sheets order_sheets_all
+      consult_list consult_detail
       symptom_search symptom_defaults
       image_exams
     ]

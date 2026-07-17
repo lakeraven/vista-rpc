@@ -463,12 +463,16 @@ module VistaRpc
     # LAB & RADIOLOGY (ORWLRR*, ORWRA*)
     # ========================================================================
 
-    # ORWLRR RESULT LIST — lab result list (multi-line).
-    # RPC is invoked with a single composite param: "dfn^from_date^to_date".
+    # ORWLRR INTERIM — lab result list (multi-line), exposed as the CPRS RPC
+    # "ORWLRR INTERIM". The historical mapping name `lab_result_list` is kept
+    # for backwards compatibility.
+    # M source: ORWLRR.m, tag INTERIM
+    # Input: three separate parameters: DFN, DATE1 (FileMan), DATE2 (FileMan).
     # Format: IEN^TEST_NAME^RESULT^UNITS^REF_RANGE^ABNORMAL_FLAG^COLLECTION_DATE^STATUS
     DataMapper.define(:lab_result_list) do |m|
       m.backend :vista
-      m.rpc "ORWLRR RESULT LIST"
+      m.source "ORWLRR.m INTERIM"
+      m.rpc "ORWLRR INTERIM"
       m.field 0, :ien,             :integer
       m.field 1, :test_name
       m.field 2, :result
@@ -827,29 +831,31 @@ module VistaRpc
       m.field 6, :frequency
     end
 
-    # ORWLRR REPORT — full lab report text
-    DataMapper.define(:lab_report) do |m|
-      m.backend :vista
-      m.rpc "ORWLRR REPORT"
-      m.text_blob :report_text
-    end
-
-    # ORWLRR REPORT LIST — DiagnosticReport-style aggregated panels (multi-line)
-    # Format: IEN^REPORT_NAME^LOINC_CODE^STATUS^COLLECTION_DATE^RESULT_DATE^
-    #         VERIFIER_DUZ^VERIFIER_NAME^RESULT_IENS^INTERPRETATION
+    # ORWLR REPORT LISTS — lab report type catalog (multi-line), exposed as the
+    # CPRS RPC "ORWLR REPORT LISTS".
+    # M source: ORWLR.m LIST
+    # Input: none (global catalog).
+    # Format: REPORT_ID^REPORT_NAME^ENABLED_FLAG^REQUIRES_DATE_FLAG^MAX_OCCURRENCES
     DataMapper.define(:lab_report_list) do |m|
       m.backend :vista
-      m.rpc "ORWLRR REPORT LIST"
-      m.field 0, :ien,             :integer
+      m.source "ORWLR.m LIST"
+      m.rpc "ORWLR REPORT LISTS"
+      m.field 0, :report_id
       m.field 1, :report_name
-      m.field 2, :loinc_code
-      m.field 3, :status
-      m.field 4, :collection_date, :fileman_datetime
-      m.field 5, :result_date,     :fileman_datetime
-      m.field 6, :verifier_duz
-      m.field 7, :verifier_name
-      m.field 8, :result_iens
-      m.field 9, :interpretation
+      m.field 2, :enabled_flag
+      m.field 3, :requires_date_flag
+      m.field 4, :max_occurrences, :integer
+    end
+
+    # ORWRP REPORT TEXT — report text (text blob), used here for the lab report
+    # path. CPRS dispatches the report ID to the appropriate M routine.
+    # M source: ORWRP.m RPT
+    # Input: DFN, RPTID, HSTYPE, DTRANGE, EXAMID, ALPHA, OMEGA.
+    DataMapper.define(:lab_report) do |m|
+      m.backend :vista
+      m.source "ORWRP.m RPT"
+      m.rpc "ORWRP REPORT TEXT"
+      m.text_blob :report_text
     end
 
     # ORWRA REPORT — full radiology report text
@@ -1161,9 +1167,86 @@ module VistaRpc
     end
 
     # ========================================================================
+    # CONSULTS (ORQQCN*)
+    # ========================================================================
+    # Consults/requests are stored in the REQUEST/CONSULTATION file (#123).
+    # The resource target is a FHIR ServiceRequest (a request for a service
+    # or procedure), not an Encounter.
+    #
+    # ORQQCN LIST — patient consult list (multi-line)
+    # M source: ORQQCN.m, tag LIST
+    # Format: CONSULT_IEN^REQUEST_DATE_TIME^STATUS^CONSULTING_SERVICE^PROCEDURE
+    DataMapper.define(:consult_list) do |m|
+      m.backend :vista
+      m.source "ORQQCN.m LIST"
+      m.rpc "ORQQCN LIST"
+      m.field 0, :ien,             :integer
+      m.field 1, :request_date,    :fileman_datetime
+      m.field 2, :status
+      m.field 3, :consulting_service
+      m.field 4, :procedure
+    end
+
+    # ORQQCN GET CONSULT — single consult record (zero node of file #123)
+    # M source: ORQQCN1.m, tag GETCSLT
+    # Format follows the REQUEST/CONSULTATION (#123) zero node layout:
+    #   piece 1   .01 FILE ENTRY DATE
+    #   piece 2   .02 PATIENT (DFN)
+    #   piece 3   .03 OE/RR ORDER IEN
+    #   piece 4   .04 PATIENT LOCATION
+    #   piece 5   .05 ORDERING FACILITY
+    #   piece 6   .06 REMOTE CONSULT FILE ENTRY
+    #   piece 7   .07 ROUTING FACILITY
+    #   piece 8   1   TO SERVICE (consulting/service)
+    #   piece 9   2   FROM
+    #   piece 10  3   DATE OF REQUEST
+    #   piece 11  4   PROCEDURE/REQUEST TYPE
+    #   piece 12  5   URGENCY
+    #   piece 13  6   PLACE OF CONSULTATION
+    #   piece 14  7   ATTENTION
+    #   piece 15  8   CPRS STATUS
+    #   piece 16  9   LAST ACTION TAKEN
+    #   piece 17  10  SENDING PROVIDER (requesting provider)
+    #   piece 18  11  RESULT
+    #   piece 19  12  MODE OF ENTRY
+    #   piece 20  13  REQUEST TYPE
+    #   piece 21  14  SERVICE RENDERED AS IN OR OUT
+    #   piece 22  15  SIGNIFICANT FINDINGS
+    #   piece 23  16  TIU RESULT NARRATIVE (cleared by GETCSLT)
+    #   piece 24  17  CLINICALLY INDICATED DATE
+    DataMapper.define(:consult_detail) do |m|
+      m.backend :vista
+      m.source "ORQQCN1.m GETCSLT"
+      m.rpc "ORQQCN GET CONSULT"
+      m.field 0,  :entry_date,          :fileman_date
+      m.field 1,  :patient_dfn,         :integer
+      m.field 2,  :order_ien
+      m.field 3,  :location
+      m.field 4,  :ordering_facility
+      m.field 5,  :remote_consult_entry
+      m.field 6,  :routing_facility
+      m.field 7,  :to_service
+      m.field 8,  :from_service
+      m.field 9,  :request_date,        :fileman_date
+      m.field 10, :procedure_type
+      m.field 11, :urgency
+      m.field 12, :place_of_consultation
+      m.field 13, :attention
+      m.field 14, :cprs_status
+      m.field 15, :last_action
+      m.field 16, :sending_provider
+      m.field 17, :result
+      m.field 18, :mode_of_entry
+      m.field 19, :request_type
+      m.field 20, :service_rendered
+      m.field 21, :significant_findings
+      m.field 22, :tiu_result
+      m.field 23, :clinically_indicated_date, :fileman_date
+    end
+
+    # ========================================================================
     # ORDERS (ORWOR*, ORWORR*)
     # ========================================================================
-    # Field positions are best-effort pending wider trace capture.
 
     DataMapper.define(:orders_unsigned) do |m|
       m.backend :vista
