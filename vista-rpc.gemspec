@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
                      "IHS-specific layer (BHD, BIPC, BMC, BEHO, BPHR, BQI, BGO, MAGG) " \
                      "lives in the companion lakeraven/rpms-rpc gem, which depends on " \
                      "this one. No Rails dependency."
-  spec.license     = "MIT"
+  spec.license     = "Apache-2.0"
   spec.metadata    = {
     "homepage_uri"      => "https://github.com/lakeraven/vista-rpc",
     "source_code_uri"   => "https://github.com/lakeraven/vista-rpc",
@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.4.0"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    Dir["{lib,docs}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
+    Dir["{lib,docs}/**/*", "LICENSE", "NOTICE", "Rakefile", "README.md"]
   end
 
   spec.add_dependency "rexml", "~> 3.2"
